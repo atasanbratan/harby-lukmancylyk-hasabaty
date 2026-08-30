@@ -1,9 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
 import { db } from './db.js';
 import { seedIfEmpty } from './seed.js';
 import { login, logout, requireAuth } from './auth.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 seedIfEmpty();
 
@@ -15,10 +20,10 @@ app.use(express.json({ limit: '15mb' })); // photos travel as base64 data URLs
 const SOLDIER_TEXT_COLUMNS = [
   'rank', 'fullName', 'birthPlace', 'birthDate', 'callUpPeriod',
   'commissariatRegion', 'commissariat', 'unit', 'company', 'platoon',
-  'diagnosis', 'familyNote', 'photo',
+  'diagnosis', 'familyNote', 'photo', 'actionFrequency',
 ];
 // JSON columns — arrays on the wire, TEXT in SQLite.
-const SOLDIER_JSON_COLUMNS = ['concerns', 'assignedPersonnel'];
+const SOLDIER_JSON_COLUMNS = ['concerns', 'assignedPersonnel', 'actionLog'];
 const SOLDIER_COLUMNS = [...SOLDIER_TEXT_COLUMNS, ...SOLDIER_JSON_COLUMNS];
 
 function uid() {
@@ -51,6 +56,7 @@ function rowToSoldier(row) {
     ...row,
     concerns: parseJsonColumn(row.concerns),
     assignedPersonnel: parseJsonColumn(row.assignedPersonnel),
+    actionLog: parseJsonColumn(row.actionLog),
     medicalEvents: eventsForSoldier(row.id),
   };
 }
@@ -76,7 +82,7 @@ function replaceEvents(id, events) {
 }
 
 function valueFor(col, body) {
-  if (col === 'concerns' || col === 'assignedPersonnel') {
+  if (SOLDIER_JSON_COLUMNS.includes(col)) {
     return JSON.stringify(Array.isArray(body[col]) ? body[col] : []);
   }
   return body[col] ?? '';
@@ -152,6 +158,22 @@ app.delete('/api/soldiers/:id', (req, res) => {
   db.prepare('DELETE FROM soldiers WHERE id = ?').run(req.params.id);
   res.json({ ok: true, deleted: existing });
 });
+
+// -- Built frontend ------------------------------------------------------
+// In dev, Vite serves the frontend on :5173 and proxies /api here, so
+// client/dist doesn't exist and this block is a no-op. In the packaged
+// desktop app (and any plain production deploy), client/dist is built
+// ahead of time and this server becomes the single process serving both
+// the SPA and the API on one origin — which is also why the frontend can
+// keep using relative fetch('/api/...') unchanged in every environment.
+const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

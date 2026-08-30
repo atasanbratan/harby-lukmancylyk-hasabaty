@@ -28,22 +28,27 @@ The app sits behind a login screen (see **Login** below).
 
 ```
 harby-lukmancylyk-hasabaty/
-├── client/          Vite + React frontend
-├── server/          Express + SQLite backend (API on port 3001)
-│   └── data/        registry.sqlite lives here (auto-created, auto-seeded)
-└── package.json      root scripts to run client + server together
+├── client/                  Vite + React frontend
+├── server/                  Express + SQLite backend (API on port 3001)
+│   └── data/                registry.sqlite lives here (auto-created, auto-seeded)
+├── desktop/                 Electron wrapper — packages client+server into a
+│                             Windows 10/11 installable .exe
+├── .github/workflows/       CI: builds (and, on a version tag, releases) the
+│                             Windows installer — see Releases below
+└── package.json              root scripts to run client + server together
 ```
 
 ## Install
 
-From the project root, install dependencies for the root, client, and server:
+From the project root, install dependencies for the root, client, server,
+and desktop app:
 
 ```bash
 npm run install:all
 ```
 
-This is equivalent to running `npm install` in `client/`, `server/`, and the
-project root separately.
+This is equivalent to running `npm install` in `client/`, `server/`,
+`desktop/`, and the project root separately.
 
 ## Run (development)
 
@@ -95,17 +100,61 @@ cd client
 npm run build
 ```
 
-This outputs to `client/dist/`. Serve those files with any static host, and
-run the API separately:
+This outputs to `client/dist/`. The Express server auto-detects that folder
+and, if present, serves the built SPA itself alongside the API on the same
+origin — so `npm start` in `server/` (after the client build above) is
+enough to get the whole app running at **http://localhost:3001**, no
+separate static host or proxy needed:
 
 ```bash
 cd server
 npm start
 ```
 
-Point the frontend at the API's URL (update the `/api` proxy target in
-`client/vite.config.js` for dev, or serve the built frontend behind the same
-origin/reverse proxy as the API in production).
+## Desktop app (Windows installer)
+
+The `desktop/` folder wraps the same client + server in Electron so it can
+be installed and run like a normal Windows program — a Start Menu / Desktop
+shortcut, no terminal, no separately-installed Node required.
+
+```bash
+npm run desktop     # build the client, then launch the app in a window (for testing)
+npm run dist:win     # build the client, then produce a Windows installer .exe
+                      # → desktop/release/<Product Name> Setup <version>.exe
+```
+
+The installer only targets **Windows 10 and 11**. `node:sqlite` (which the
+backend uses) needs Node 22.5+, and Electron only bundles that on fairly
+recent releases — genuine Windows 7/8 support would mean swapping the
+database layer for something with no Node-version floor (e.g.
+`better-sqlite3`, rebuilt per Electron version) *and* an old, unmaintained
+Electron/Chromium build, since Chromium itself dropped Windows 7/8 support
+in 2023. Not done here; flagged in case it's ever worth revisiting.
+
+The app's SQLite database lives in the per-user app-data folder (Electron's
+`userData`, e.g. `%APPDATA%\aytratyn-gozegcilikde-saklamak-desktop\data\`),
+not inside the install directory — so it survives reinstalls/updates and
+doesn't need admin rights to write to.
+
+## Releases
+
+`.github/workflows/release.yml` builds the Windows installer on GitHub's own
+Windows runners:
+
+- Any push to `main`, or a manual run from the Actions tab, **builds** the
+  installer and attaches it as a downloadable workflow artifact (handy for
+  testing a change without cutting a release).
+- Pushing a tag like `v1.0.1` — matching the `version` in
+  `desktop/package.json` — additionally **publishes** it as a GitHub
+  Release with the `.exe` attached. Bump that version and tag together:
+
+  ```bash
+  git tag v1.0.1
+  git push origin v1.0.1
+  ```
+
+The installer isn't code-signed, so Windows SmartScreen will likely show an
+"unknown publisher" warning on first run — expected, not a broken build.
 
 ## API
 

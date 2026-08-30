@@ -1,0 +1,51 @@
+name: Build Windows installer
+
+# Push a tag like "v1.0.1" (matching desktop/package.json's "version") to
+# build the Windows 10/11 installer and publish it as a GitHub Release.
+# Any other trigger (manual dispatch, or a push to main) just builds and
+# uploads the .exe as a workflow artifact, without publishing a release.
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm run install:all
+
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
+
+      # electron-builder's "onTag" publish policy only actually publishes
+      # a GitHub Release when this run was triggered by a version tag that
+      # matches desktop/package.json's version; every other trigger just
+      # builds the installer without publishing anything.
+      - name: Build Windows installer
+        working-directory: desktop
+        run: npx electron-builder --win --publish onTag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: desktop/release/*.exe

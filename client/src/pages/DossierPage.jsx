@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../lib/AppState';
-import { fmtDate, fmtStamp, initials, needsAttention, unitLabel } from '../lib/utils';
-import { ALERT, AMBER, OK, KINDS } from '../lib/constants';
+import { fmtDate, fmtStamp, initials, monitoringStatus, unitLabel } from '../lib/utils';
+import { ALERT, AMBER, OK, KINDS, FREQUENCY_MAP, CONCERN_MAP } from '../lib/constants';
 
 export default function DossierPage() {
   const { id } = useParams();
@@ -41,9 +41,12 @@ export default function DossierPage() {
     );
   }
 
-  const flagged = needsAttention(rec);
+  const status = monitoringStatus(rec);
+  const flagged = status.alert;
   const concerns = rec.concerns || [];
   const assignedPersonnel = rec.assignedPersonnel || [];
+  const frequency = FREQUENCY_MAP[rec.actionFrequency];
+  const actionLog = (rec.actionLog || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const evs = (rec.medicalEvents || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const metaLines = [
@@ -131,9 +134,9 @@ export default function DossierPage() {
               </div>
             ))}
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${flagged ? '#E5484D' : '#1F2C38'}`, padding: '9px 11px', marginTop: 6, opacity: reveal >= 5 ? 1 : 0, transition: 'opacity 160ms' }}>
-              <span className={flagged ? 'soldier-card-alert-label' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: flagged ? '#E5484D' : '#3FB68B', boxShadow: flagged ? '0 0 8px #E5484D' : 'none' }} />
-              <span className={`mono${flagged ? ' soldier-card-alert-label' : ''}`} style={{ fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: flagged ? '#E5484D' : '#3FB68B' }}>
-                {flagged ? 'Iş geçirilmegi talap edýär' : 'Aýratyn gözegçilik ýok'}
+              <span className={flagged ? 'soldier-card-alert-label' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: status.color, boxShadow: flagged ? '0 0 8px #E5484D' : 'none' }} />
+              <span className={`mono${flagged ? ' soldier-card-alert-label' : ''}`} style={{ fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: status.color }}>
+                {status.label}
               </span>
             </div>
             <span className="mono" style={{ fontSize: 10, color: '#4C5A66', letterSpacing: '.08em' }}>Soňky üýtgedilen · {fmtStamp(rec.updatedAt)}</span>
@@ -158,46 +161,6 @@ export default function DossierPage() {
               </div>
             </section>
           ))}
-
-          <section style={{ border: `1px solid ${flagged ? '#E5484D' : '#1F2C38'}`, background: '#111821' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #1F2C38', padding: '10px 16px' }}>
-              <span className="condensed" style={{ fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: '#C9D6E0' }}>Aýratyn gözegçilik ýagdaýlary</span>
-              <span style={{ flex: 1, height: 1, background: 'repeating-linear-gradient(90deg,#1F2C38 0 5px,transparent 5px 10px)' }} />
-              {concerns.length > 0 && <span className="mono" style={{ fontSize: 10, color: '#E5484D' }}>{concerns.length} bellik</span>}
-            </div>
-            <div style={{ padding: 16 }}>
-              {concerns.length === 0 ? (
-                <span style={{ fontSize: 13, color: '#6B7C8C' }}>Ýok.</span>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {concerns.map((c) => (
-                    <div key={c.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 13, color: '#E3ECF3' }}>● {c.label}</span>
-                      {c.note && <span style={{ fontSize: 12, color: '#8FA0AE', paddingLeft: 16 }}>{c.note}</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section style={{ border: '1px solid #1F2C38', background: '#111821' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #1F2C38', padding: '10px 16px' }}>
-              <span className="condensed" style={{ fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: '#C9D6E0' }}>Iş geçirmäge berkidilen harby gullukçy</span>
-              <span style={{ flex: 1, height: 1, background: 'repeating-linear-gradient(90deg,#1F2C38 0 5px,transparent 5px 10px)' }} />
-            </div>
-            <div style={{ padding: 16 }}>
-              {assignedPersonnel.length === 0 ? (
-                <span style={{ fontSize: 13, color: '#6B7C8C' }}>Bellenilmedik.</span>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {assignedPersonnel.map((name) => (
-                    <span key={name} className="mono" style={{ fontSize: 11, letterSpacing: '.04em', border: '1px solid #1F2C38', padding: '6px 10px', color: '#C9D6E0' }}>{name}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
 
           <section style={{ border: '1px solid #1F2C38', background: '#111821' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #1F2C38', padding: '10px 16px' }}>
@@ -224,6 +187,81 @@ export default function DossierPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section style={{ border: `1px solid ${flagged ? '#E5484D' : '#1F2C38'}`, background: '#111821' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #1F2C38', padding: '10px 16px' }}>
+              <span className="condensed" style={{ fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: '#C9D6E0' }}>Aýratyn gözegçilik ýagdaýlary</span>
+              <span style={{ flex: 1, height: 1, background: 'repeating-linear-gradient(90deg,#1F2C38 0 5px,transparent 5px 10px)' }} />
+              {concerns.length > 0 && <span className="mono" style={{ fontSize: 10, color: '#E5484D' }}>{concerns.length} bellik</span>}
+            </div>
+            <div style={{ padding: 16 }}>
+              {concerns.length === 0 ? (
+                <span style={{ fontSize: 13, color: '#6B7C8C' }}>Ýok.</span>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {concerns.map((c) => (
+                    <div key={c.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 13, color: '#E3ECF3' }}>● {CONCERN_MAP[c.key] || c.label}</span>
+                      {c.note && <span style={{ fontSize: 12, color: '#8FA0AE', paddingLeft: 16 }}>{c.note}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section style={{ border: '1px solid #1F2C38', background: '#111821' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #1F2C38', padding: '10px 16px' }}>
+              <span className="condensed" style={{ fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: '#C9D6E0' }}>Iş geçirmäge berkidilen harby gullukçy</span>
+              <span style={{ flex: 1, height: 1, background: 'repeating-linear-gradient(90deg,#1F2C38 0 5px,transparent 5px 10px)' }} />
+              {frequency && <span className="mono" style={{ fontSize: 10, color: '#4C5A66' }}>Geçirilmeli iş: {frequency.label}</span>}
+            </div>
+            <div style={{ padding: 16 }}>
+              {assignedPersonnel.length === 0 ? (
+                <span style={{ fontSize: 13, color: '#6B7C8C' }}>Bellenilmedik.</span>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {assignedPersonnel.map((name) => (
+                    <span key={name} className="mono" style={{ fontSize: 11, letterSpacing: '.04em', border: '1px solid #1F2C38', padding: '6px 10px', color: '#C9D6E0' }}>{name}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section style={{ border: '1px solid #1F2C38', background: '#111821' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #1F2C38', padding: '10px 16px' }}>
+              <span className="condensed" style={{ fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: '#C9D6E0' }}>Geçirilen çäreleriň ýazgysy</span>
+              <span style={{ flex: 1, height: 1, background: 'repeating-linear-gradient(90deg,#1F2C38 0 5px,transparent 5px 10px)' }} />
+              {actionLog.length > 0 && <span className="mono" style={{ fontSize: 10, color: '#4C5A66' }}>{actionLog.length} ýazgy</span>}
+            </div>
+            <div style={{ padding: 16 }}>
+              {actionLog.length === 0 ? (
+                <span style={{ fontSize: 13, color: '#6B7C8C' }}>Ýazgy ýok.</span>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
+                    <thead>
+                      <tr>
+                        <th className="mono" style={{ textAlign: 'left', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#6B7C8C', padding: '0 12px 8px 0', fontWeight: 400 }}>Senesi</th>
+                        <th className="mono" style={{ textAlign: 'left', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#6B7C8C', padding: '0 12px 8px 0', fontWeight: 400 }}>Geçirilen çäre</th>
+                        <th className="mono" style={{ textAlign: 'left', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#6B7C8C', padding: '0 0 8px 0', fontWeight: 400 }}>Ýerine ýetiren</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {actionLog.map((e, i) => (
+                        <tr key={i} style={{ borderTop: '1px solid #1F2C38' }}>
+                          <td className="mono" style={{ padding: '10px 12px 10px 0', fontSize: 12, color: '#8FA0AE', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{fmtDate(e.date)}</td>
+                          <td style={{ padding: '10px 12px 10px 0', fontSize: 13, color: '#C9D6E0', verticalAlign: 'top' }}>{e.description || '—'}</td>
+                          <td style={{ padding: '10px 0', fontSize: 13, color: '#C9D6E0', verticalAlign: 'top' }}>{e.performedBy || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

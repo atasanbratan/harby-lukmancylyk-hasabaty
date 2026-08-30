@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../lib/AppState';
 import {
-  blankSoldier, blankEvent, PERIODS, REGIONS, KINDS, RANKS, CONCERNS,
-  ASSIGNED_PERSONNEL_OPTIONS, ALERT,
+  blankSoldier, blankEvent, blankActionLogEntry, PERIODS, REGIONS, KINDS, RANKS, CONCERNS,
+  ASSIGNED_PERSONNEL_OPTIONS, FREQUENCIES, ALERT,
 } from '../lib/constants';
 import * as api from '../lib/api';
 
@@ -114,6 +114,25 @@ export default function FormPage() {
       const assignedPersonnel = cur.includes(name) ? cur.filter((n) => n !== name) : [...cur, name];
       return { ...d, assignedPersonnel };
     });
+    setDirty(true);
+  };
+
+  const setActionLogField = (i, k, v) => {
+    setDraft((d) => {
+      const log = (d.actionLog || []).slice();
+      log[i] = { ...log[i], [k]: v };
+      return { ...d, actionLog: log };
+    });
+    setDirty(true);
+  };
+
+  const addActionLogEntry = () => {
+    setDraft((d) => ({ ...d, actionLog: [...(d.actionLog || []), blankActionLogEntry()] }));
+    setDirty(true);
+  };
+
+  const removeActionLogEntry = (i) => {
+    setDraft((d) => ({ ...d, actionLog: d.actionLog.filter((_, j) => j !== i) }));
     setDirty(true);
   };
 
@@ -271,52 +290,6 @@ export default function FormPage() {
         </section>
 
         <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
-          <span className="condensed" style={sectionTitleStyle}>Ýagdaý — aýratyn gözegçilik alamatlary</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {CONCERNS.map((c) => {
-              const active = (draft.concerns || []).find((x) => x.key === c.key);
-              return (
-                <div key={c.key}>
-                  <label className="checkbox-row">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(active)}
-                      onChange={() => toggleConcern(c)}
-                    />
-                    <span>{c.label}</span>
-                  </label>
-                  {active && (
-                    <input
-                      className="field-input"
-                      style={{ marginTop: 8, marginLeft: 25, width: 'calc(100% - 25px)' }}
-                      placeholder="Bellik ýazyň…"
-                      value={active.note}
-                      onChange={(e) => setConcernNote(c.key, e.target.value)}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
-          <span className="condensed" style={sectionTitleStyle}>Iş geçirmäge berkidilen harby gullukçy</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {ASSIGNED_PERSONNEL_OPTIONS.map((name) => (
-              <label key={name} className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={(draft.assignedPersonnel || []).includes(name)}
-                  onChange={() => togglePersonnel(name)}
-                />
-                <span>{name}</span>
-              </label>
-            ))}
-          </div>
-        </section>
-
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
             <span className="condensed" style={{ flex: 1, ...sectionTitleStyle, marginBottom: 0 }}>Lukmançylyk wakalary</span>
             <button type="button" className="btn" onClick={addEvent}>+ Waka goş</button>
@@ -363,6 +336,114 @@ export default function FormPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </section>
+
+        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+          <span className="condensed" style={sectionTitleStyle}>Ýagdaý — aýratyn gözegçilik alamatlary</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {CONCERNS.map((c) => {
+              const active = (draft.concerns || []).find((x) => x.key === c.key);
+              return (
+                <div key={c.key}>
+                  <label className="checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(active)}
+                      onChange={() => toggleConcern(c)}
+                    />
+                    <span>{c.label}</span>
+                  </label>
+                  {active && (
+                    <input
+                      className="field-input"
+                      style={{ marginTop: 8, marginLeft: 25, width: 'calc(100% - 25px)' }}
+                      placeholder="Bellik ýazyň…"
+                      value={active.note}
+                      onChange={(e) => setConcernNote(c.key, e.target.value)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+          <span className="condensed" style={sectionTitleStyle}>Iş geçirmäge berkidilen harby gullukçy</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {ASSIGNED_PERSONNEL_OPTIONS.map((name) => (
+              <label key={name} className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={(draft.assignedPersonnel || []).includes(name)}
+                  onChange={() => togglePersonnel(name)}
+                />
+                <span>{name}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+          <span className="condensed" style={sectionTitleStyle}>Geçirilmeli iş</span>
+          <div style={{ maxWidth: 260 }}>
+            <span className="field-label">Iş geçirilmeli aralyk</span>
+            <select className="field-input" {...field('actionFrequency')}>
+              <option value="">— saýlaň —</option>
+              {FREQUENCIES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+          </div>
+        </section>
+
+        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+            <span className="condensed" style={{ flex: 1, ...sectionTitleStyle, marginBottom: 0 }}>Geçirilen çäreleriň ýazgysy</span>
+            <button type="button" className="btn" onClick={addActionLogEntry}>+ Ýazgy goş</button>
+          </div>
+          {(draft.actionLog || []).length === 0 ? (
+            <span style={{ fontSize: 13, color: '#6B7C8C' }}>Ýazgy ýok.</span>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '0 8px 8px 0' }}><span className="field-label" style={{ margin: 0 }}>Senesi</span></th>
+                    <th style={{ textAlign: 'left', padding: '0 8px 8px 0' }}><span className="field-label" style={{ margin: 0 }}>Geçirilen çäre</span></th>
+                    <th style={{ textAlign: 'left', padding: '0 8px 8px 0' }}><span className="field-label" style={{ margin: 0 }}>Ýerine ýetiren</span></th>
+                    <th style={{ width: 32 }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {draft.actionLog.map((e, i) => (
+                    <tr key={i}>
+                      <td style={{ padding: '4px 8px 4px 0', verticalAlign: 'top', width: 160 }}>
+                        <input type="date" className="field-input" value={e.date} onChange={(ev) => setActionLogField(i, 'date', ev.target.value)} />
+                      </td>
+                      <td style={{ padding: '4px 8px 4px 0', verticalAlign: 'top' }}>
+                        <input className="field-input" value={e.description} onChange={(ev) => setActionLogField(i, 'description', ev.target.value)} placeholder="Geçirilen çäräniň beýany" />
+                      </td>
+                      <td style={{ padding: '4px 8px 4px 0', verticalAlign: 'top', width: 200 }}>
+                        <select className="field-input" value={e.performedBy} onChange={(ev) => setActionLogField(i, 'performedBy', ev.target.value)}>
+                          <option value="">— saýlaň —</option>
+                          {ASSIGNED_PERSONNEL_OPTIONS.map((name) => <option key={name} value={name}>{name}</option>)}
+                        </select>
+                      </td>
+                      <td style={{ padding: '4px 0', verticalAlign: 'top' }}>
+                        <button
+                          type="button"
+                          onClick={() => removeActionLogEntry(i)}
+                          aria-label="Ýazgyny aýyr"
+                          style={{ width: 34, height: 34, display: 'grid', placeItems: 'center', background: 'transparent', border: '1px solid #1F2C38', color: '#8FA0AE', fontSize: 11, cursor: 'pointer' }}
+                        >
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>

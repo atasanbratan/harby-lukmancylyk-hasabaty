@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useAppState } from '../lib/AppState';
-import { surname, searchIndex } from '../lib/utils';
+import { surname, searchIndex, abbreviateUnit } from '../lib/utils';
 import { PERIODS, REGIONS, CONCERNS } from '../lib/constants';
 import SoldierCard from '../components/SoldierCard';
 
@@ -73,7 +73,7 @@ export default function RegistryPage() {
   const activeCount = Object.values(filters).reduce((n, arr) => n + arr.length, 0) + (query ? 1 : 0);
 
   const filterRows = [
-    { label: 'Bölümçe', group: 'unit', options: unitsAll.map((u) => ({ value: u, label: u })) },
+    { label: 'Bölümçe', group: 'unit', options: unitsAll.map((u) => ({ value: u, label: abbreviateUnit(u) })) },
     { label: 'Çagyrylyş', group: 'period', options: FILTER_PERIODS.map((p) => ({ value: p, label: p })) },
     { label: 'Welaýat', group: 'region', options: REGIONS.map((r) => ({ value: r, label: r })) },
     { label: 'Ýagdaýy', group: 'concern', options: CONCERNS.map((c) => ({ value: c.key, label: c.label })) },

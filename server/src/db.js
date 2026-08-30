@@ -4,7 +4,9 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, '..', 'data');
+// The desktop app points this at a writable per-user folder (Electron's
+// userData dir) since the install directory itself may not be writable.
+const dataDir = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 const dbPath = path.join(dataDir, 'registry.sqlite');
 
@@ -57,6 +59,12 @@ if (!existingColumns.has('concerns')) {
 }
 if (!existingColumns.has('assignedPersonnel')) {
   db.exec("ALTER TABLE soldiers ADD COLUMN assignedPersonnel TEXT DEFAULT '[]'");
+}
+if (!existingColumns.has('actionFrequency')) {
+  db.exec("ALTER TABLE soldiers ADD COLUMN actionFrequency TEXT DEFAULT ''");
+}
+if (!existingColumns.has('actionLog')) {
+  db.exec("ALTER TABLE soldiers ADD COLUMN actionLog TEXT DEFAULT '[]'");
 }
 
 export function rowCount(table) {

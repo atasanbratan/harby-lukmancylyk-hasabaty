@@ -2,12 +2,14 @@
   "name": "harby-lukmancylyk-hasabaty",
   "version": "1.0.0",
   "private": true,
-  "description": "Harby lukmançylyk hasabaty — military medical registry (Vite+React frontend, Express/SQLite backend)",
+  "description": "Aýratyn gözegçilikde saklamak — special-monitoring registry (Vite+React frontend, Express/SQLite backend), installable as a Windows 10/11 desktop app",
   "scripts": {
-    "install:all": "npm install --prefix server && npm install --prefix client",
+    "install:all": "npm install --prefix server && npm install --prefix client && npm install --prefix desktop",
     "dev": "concurrently -n server,client -c yellow,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "dev:server": "npm run dev --prefix server",
-    "dev:client": "npm run dev --prefix client"
+    "dev:client": "npm run dev --prefix client",
+    "desktop": "npm run build --prefix client && npm start --prefix desktop",
+    "dist:win": "npm run build --prefix client && npm run dist --prefix desktop"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

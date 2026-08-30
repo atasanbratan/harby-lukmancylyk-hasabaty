@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fmtDate, unitLabel, initials, needsAttention } from '../lib/utils';
+import { fmtDate, unitLabel, initials, monitoringStatus } from '../lib/utils';
 import { useAppState } from '../lib/AppState';
 
 function highlightParts(fullName, query) {
@@ -23,7 +23,8 @@ function highlightParts(fullName, query) {
 export default function SoldierCard({ soldier, query, delay = 0 }) {
   const { askDelete } = useAppState();
   const [hovered, setHovered] = useState(false);
-  const flagged = needsAttention(soldier);
+  const status = monitoringStatus(soldier);
+  const flagged = status.alert;
   const brColor = flagged ? '#E5484D' : (hovered ? '#FFB627' : '#1F2C38');
   const brSize = hovered ? 18 : 12;
 
@@ -93,13 +94,12 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
           <span className="clamp-1" style={{ fontSize: 12, color: '#6B7C8C' }}>{soldier.birthPlace || '—'}</span>
           <span className="clamp-1" style={{ fontSize: 12, color: '#8FA0AE' }}>{unitLabel(soldier)}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto', paddingTop: 4 }}>
-            {flagged ? (
-              <span className="mono soldier-card-alert-label" style={{ fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#E5484D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                ● Iş geçirilmegi talap edýär
-              </span>
-            ) : (
-              <span className="mono" style={{ fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#4C5A66' }}>Aýratyn gözegçilik ýok</span>
-            )}
+            <span
+              className={`mono${flagged ? ' soldier-card-alert-label' : ''}`}
+              style={{ fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: flagged ? '#E5484D' : status.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            >
+              ● {status.label}
+            </span>
             <span style={{ flex: 1 }} />
             <span className="mono" style={{ fontSize: 10, color: '#4C5A66', flexShrink: 0 }}>{soldier.callUpPeriod}</span>
           </div>

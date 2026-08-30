@@ -1,0 +1,67 @@
+{
+  "name": "aytratyn-gozegcilikde-saklamak-desktop",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Desktop installer for Aýratyn gözegçilikde saklamak",
+  "author": "atasanbratan",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.atasanbratan.aytratyngozegcilik",
+    "productName": "Aýratyn gözegçilikde saklamak",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../client/dist",
+        "to": "client/dist"
+      },
+      {
+        "from": "../server",
+        "to": "server",
+        "filter": [
+          "**/*",
+          "!data/**"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "atasanbratan",
+      "repo": "harby-lukmancylyk-hasabaty"
+    }
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "electron#44.0.0": true
+    }
+  }
+}
