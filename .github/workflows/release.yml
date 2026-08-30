@@ -34,13 +34,19 @@ jobs:
         working-directory: client
         run: npm run build
 
-      # electron-builder's "onTag" publish policy only actually publishes
-      # a GitHub Release when this run was triggered by a version tag that
-      # matches desktop/package.json's version; every other trigger just
-      # builds the installer without publishing anything.
+      # Decide publish-vs-build-only from the Actions-provided $GITHUB_REF
+      # directly, rather than electron-builder's own "onTag" policy, which
+      # inspects local git tag refs — those aren't present on the default
+      # shallow, tag-less checkout and can stall trying to resolve them.
       - name: Build Windows installer
         working-directory: desktop
-        run: npx electron-builder --win --publish onTag
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            npx electron-builder --win --publish always
+          else
+            npx electron-builder --win --publish never
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
