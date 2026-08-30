@@ -34,6 +34,14 @@ jobs:
         working-directory: client
         run: npm run build
 
+      # Windows Defender's real-time scan of every file NSIS/signtool
+      # touches is a well-known cause of electron-builder hanging for a
+      # very long time (sometimes indefinitely) on GitHub-hosted Windows
+      # runners specifically — it doesn't happen on a normal dev machine.
+      - name: Disable Windows Defender real-time scanning
+        shell: powershell
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+
       # Decide publish-vs-build-only from the Actions-provided $GITHUB_REF
       # directly, rather than electron-builder's own "onTag" policy, which
       # inspects local git tag refs — those aren't present on the default
@@ -41,6 +49,7 @@ jobs:
       - name: Build Windows installer
         working-directory: desktop
         shell: bash
+        timeout-minutes: 12
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             npx electron-builder --win --publish always
