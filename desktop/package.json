@@ -16,7 +16,7 @@
   },
   "build": {
     "appId": "com.atasanbratan.aytratyngozegcilik",
-    "productName": "Aýratyn gözegçilikde saklamak",
+    "productName": "Aytratyn Gozegcilik",
     "directories": {
       "output": "release"
     },
