@@ -35,9 +35,10 @@ jobs:
         run: npm run build
 
       # Windows Defender's real-time scan of every file NSIS/signtool
-      # touches is a well-known cause of electron-builder hanging for a
-      # very long time (sometimes indefinitely) on GitHub-hosted Windows
-      # runners specifically — it doesn't happen on a normal dev machine.
+      # touches is a known cause of electron-builder hanging on
+      # GitHub-hosted Windows runners — Set-MpPreference is kept here as
+      # a best effort, but note it can silently no-op under Tamper
+      # Protection on these hardened runner images.
       - name: Disable Windows Defender real-time scanning
         shell: powershell
         run: Set-MpPreference -DisableRealtimeMonitoring $true
@@ -58,6 +59,14 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # electron-builder otherwise probes the Windows certificate
+          # store for a signing identity even with no cert configured;
+          # that auto-discovery can trigger a network-dependent
+          # revocation check that hangs on a CI runner. Every hang so
+          # far happened right in that signing flow (between two
+          # "no signing info identified" log lines), so rule this out
+          # explicitly rather than relying on the default probe.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload installer as workflow artifact
         uses: actions/upload-artifact@v4
