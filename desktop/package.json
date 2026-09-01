@@ -17,6 +17,7 @@
   "build": {
     "appId": "com.atasanbratan.aytratyngozegcilik",
     "productName": "Aytratyn Gozegcilik",
+    "compression": "normal",
     "directories": {
       "output": "release"
     },

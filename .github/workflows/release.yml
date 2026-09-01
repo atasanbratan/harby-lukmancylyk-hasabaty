@@ -17,11 +17,6 @@ permissions:
 
 jobs:
   build-windows:
-    # Pinned, not windows-latest: 4 straight runs hung at the identical spot
-    # in electron-builder's (old, unmaintained) bundled NSIS binary right as
-    # it starts building the uninstaller stub — a known category of failure
-    # when GH rolls windows-latest to a newer Windows Server base image that
-    # NSIS 3.0.4.1 doesn't handle. windows-2022 has been stable for years.
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -39,11 +34,7 @@ jobs:
         working-directory: client
         run: npm run build
 
-      # Windows Defender's real-time scan of every file NSIS/signtool
-      # touches is a known cause of electron-builder hanging on
-      # GitHub-hosted Windows runners — Set-MpPreference is kept here as
-      # a best effort, but note it can silently no-op under Tamper
-      # Protection on these hardened runner images.
+      # Best-effort speedup; harmless either way.
       - name: Disable Windows Defender real-time scanning
         shell: powershell
         run: Set-MpPreference -DisableRealtimeMonitoring $true
@@ -51,11 +42,19 @@ jobs:
       # Decide publish-vs-build-only from the Actions-provided $GITHUB_REF
       # directly, rather than electron-builder's own "onTag" policy, which
       # inspects local git tag refs — those aren't present on the default
-      # shallow, tag-less checkout and can stall trying to resolve them.
+      # shallow, tag-less checkout.
+      #
+      # timeout-minutes / DEBUG: with DEBUG=electron-builder on, what first
+      # looked like an indefinite hang turned out to be silent, genuine work
+      # — 7za.exe compressing the whole win-unpacked Electron bundle into
+      # the NSIS payload at max compression (-mx=9), which is far slower on
+      # GH's 2-vCPU runners than on a normal dev machine. desktop/package.json
+      # now sets "compression": "normal" to fix the actual bottleneck; the
+      # timeout stays as a safety net in case it's ever genuinely stuck.
       - name: Build Windows installer
         working-directory: desktop
         shell: bash
-        timeout-minutes: 12
+        timeout-minutes: 15
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             npx electron-builder --win --publish always
@@ -64,13 +63,6 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # electron-builder otherwise probes the Windows certificate
-          # store for a signing identity even with no cert configured;
-          # that auto-discovery can trigger a network-dependent
-          # revocation check that hangs on a CI runner. Every hang so
-          # far happened right in that signing flow (between two
-          # "no signing info identified" log lines), so rule this out
-          # explicitly rather than relying on the default probe.
           CSC_IDENTITY_AUTO_DISCOVERY: false
           DEBUG: electron-builder
 
