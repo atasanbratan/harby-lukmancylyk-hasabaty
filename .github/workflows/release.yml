@@ -45,16 +45,19 @@ jobs:
       # shallow, tag-less checkout.
       #
       # timeout-minutes / DEBUG: with DEBUG=electron-builder on, what first
-      # looked like an indefinite hang turned out to be silent, genuine work
-      # — 7za.exe compressing the whole win-unpacked Electron bundle into
-      # the NSIS payload at max compression (-mx=9), which is far slower on
-      # GH's 2-vCPU runners than on a normal dev machine. desktop/package.json
-      # now sets "compression": "normal" to fix the actual bottleneck; the
-      # timeout stays as a safety net in case it's ever genuinely stuck.
+      # looked like an indefinite hang turned out to be silent, genuine
+      # work — 7za.exe compressing the whole win-unpacked Electron bundle
+      # into the NSIS payload at a fixed -mx=9 (that specific step isn't
+      # controlled by the top-level "compression" build option, confirmed
+      # by it still showing -mx=9 with that set to "normal"). It's just
+      # far slower on GH's 2-vCPU runners than on a real dev machine —
+      # trimming Electron's own unused locale files in desktop/package.json
+      # shrinks the payload a little, but the timeout is set generously
+      # to cover the rest since there's no further lever on this step.
       - name: Build Windows installer
         working-directory: desktop
         shell: bash
-        timeout-minutes: 15
+        timeout-minutes: 30
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             npx electron-builder --win --publish always

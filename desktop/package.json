@@ -18,6 +18,7 @@
     "appId": "com.atasanbratan.aytratyngozegcilik",
     "productName": "Aytratyn Gozegcilik",
     "compression": "normal",
+    "electronLanguages": ["en-US"],
     "directories": {
       "output": "release"
     },
