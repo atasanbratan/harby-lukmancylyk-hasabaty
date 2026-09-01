@@ -17,7 +17,12 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    # Pinned, not windows-latest: 4 straight runs hung at the identical spot
+    # in electron-builder's (old, unmaintained) bundled NSIS binary right as
+    # it starts building the uninstaller stub — a known category of failure
+    # when GH rolls windows-latest to a newer Windows Server base image that
+    # NSIS 3.0.4.1 doesn't handle. windows-2022 has been stable for years.
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,6 +72,7 @@ jobs:
           # "no signing info identified" log lines), so rule this out
           # explicitly rather than relying on the default probe.
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          DEBUG: electron-builder
 
       - name: Upload installer as workflow artifact
         uses: actions/upload-artifact@v4
