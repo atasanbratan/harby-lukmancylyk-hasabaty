@@ -34,26 +34,34 @@ jobs:
         working-directory: client
         run: npm run build
 
-      # Best-effort speedup; harmless either way.
-      - name: Disable Windows Defender real-time scanning
+      # Set-MpPreference -DisableRealtimeMonitoring reports success even
+      # when Tamper Protection silently blocks it on these hardened runner
+      # images — verify it actually took effect, and fall back to explicit
+      # exclusion paths (a narrower operation Tamper Protection typically
+      # does allow) for everywhere the build reads/writes if not. A ~30s
+      # compression step taking 30+ minutes (60-90x) is real AV/behavior-
+      # monitoring interference, not just a weaker CI CPU.
+      - name: Disable or exclude from Windows Defender scanning
         shell: powershell
-        run: Set-MpPreference -DisableRealtimeMonitoring $true
+        run: |
+          Set-MpPreference -DisableRealtimeMonitoring $true
+          $status = Get-MpComputerStatus
+          Write-Host "RealTimeProtectionEnabled: $($status.RealTimeProtectionEnabled)"
+          if ($status.RealTimeProtectionEnabled) {
+            Write-Host "Real-time protection still on (Tamper Protection likely blocked the disable) — adding exclusion paths instead."
+          }
+          Add-MpPreference -ExclusionPath "${{ github.workspace }}"
+          Add-MpPreference -ExclusionPath "$env:LOCALAPPDATA\electron-builder\Cache"
+          Add-MpPreference -ExclusionPath "$env:TEMP"
+          Add-MpPreference -ExclusionProcess "7za.exe"
+          Add-MpPreference -ExclusionProcess "makensis.exe"
+          Add-MpPreference -ExclusionProcess "signtool.exe"
+          Add-MpPreference -ExclusionProcess "app-builder.exe"
 
       # Decide publish-vs-build-only from the Actions-provided $GITHUB_REF
       # directly, rather than electron-builder's own "onTag" policy, which
       # inspects local git tag refs — those aren't present on the default
       # shallow, tag-less checkout.
-      #
-      # timeout-minutes / DEBUG: with DEBUG=electron-builder on, what first
-      # looked like an indefinite hang turned out to be silent, genuine
-      # work — 7za.exe compressing the whole win-unpacked Electron bundle
-      # into the NSIS payload at a fixed -mx=9 (that specific step isn't
-      # controlled by the top-level "compression" build option, confirmed
-      # by it still showing -mx=9 with that set to "normal"). It's just
-      # far slower on GH's 2-vCPU runners than on a real dev machine —
-      # trimming Electron's own unused locale files in desktop/package.json
-      # shrinks the payload a little, but the timeout is set generously
-      # to cover the rest since there's no further lever on this step.
       - name: Build Windows installer
         working-directory: desktop
         shell: bash
