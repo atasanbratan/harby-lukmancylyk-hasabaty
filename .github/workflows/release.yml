@@ -36,19 +36,23 @@ jobs:
 
       # Set-MpPreference -DisableRealtimeMonitoring reports success even
       # when Tamper Protection silently blocks it on these hardened runner
-      # images — verify it actually took effect, and fall back to explicit
+      # images - verify it actually took effect, and fall back to explicit
       # exclusion paths (a narrower operation Tamper Protection typically
       # does allow) for everywhere the build reads/writes if not. A ~30s
       # compression step taking 30+ minutes (60-90x) is real AV/behavior-
       # monitoring interference, not just a weaker CI CPU.
+      #
+      # pwsh (PowerShell 7), not the default "powershell" (5.1) alias -
+      # 5.1 choked on a non-ASCII dash character in an earlier version of
+      # this script with a confusing, misattributed parse error.
       - name: Disable or exclude from Windows Defender scanning
-        shell: powershell
+        shell: pwsh
         run: |
           Set-MpPreference -DisableRealtimeMonitoring $true
           $status = Get-MpComputerStatus
           Write-Host "RealTimeProtectionEnabled: $($status.RealTimeProtectionEnabled)"
           if ($status.RealTimeProtectionEnabled) {
-            Write-Host "Real-time protection still on (Tamper Protection likely blocked the disable) — adding exclusion paths instead."
+            Write-Host "Real-time protection still on (Tamper Protection likely blocked the disable) - adding exclusion paths instead."
           }
           Add-MpPreference -ExclusionPath "${{ github.workspace }}"
           Add-MpPreference -ExclusionPath "$env:LOCALAPPDATA\electron-builder\Cache"
