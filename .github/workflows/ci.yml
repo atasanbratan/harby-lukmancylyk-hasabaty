@@ -1,0 +1,76 @@
+name: CI
+
+# Validates the web app (client + server) on every push/PR. Does not build
+# the Windows desktop installer — that's built locally with
+# `npm run dist:win` (see desktop/ and the README's "Desktop app" section).
+# Building it in GitHub Actions hit a reproducible deadlock in
+# electron-builder's NSIS packaging step that survived every mitigation
+# tried (Defender exclusions, signing config, runner image, timeouts up to
+# 60 minutes) — not worth chasing further given a reliable local build
+# already exists.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --prefix server && npm install --prefix client
+
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
+
+      # Boot the server (which also serves the built frontend once
+      # client/dist exists) and confirm it actually answers requests,
+      # rather than just checking that `npm install`/`npm run build`
+      # exit 0.
+      - name: Smoke-test the server
+        working-directory: server
+        run: |
+          npm start &
+          server_pid=$!
+          for i in $(seq 1 20); do
+            if curl -sf -o /dev/null http://localhost:3001/; then
+              echo "Server is up."
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Server never came up." >&2
+              kill "$server_pid" 2>/dev/null || true
+              exit 1
+            fi
+            sleep 0.5
+          done
+
+          login_status=$(curl -s -o /tmp/login.json -w '%{http_code}' \
+            -X POST http://localhost:3001/api/login \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"B.Hocjyyev","password":"1111"}')
+          echo "POST /api/login -> $login_status"
+          [ "$login_status" = "200" ] || { cat /tmp/login.json; kill "$server_pid"; exit 1; }
+
+          token=$(node -pe "JSON.parse(require('fs').readFileSync('/tmp/login.json')).token")
+          soldiers_status=$(curl -s -o /tmp/soldiers.json -w '%{http_code}' \
+            -H "Authorization: Bearer $token" http://localhost:3001/api/soldiers)
+          echo "GET /api/soldiers -> $soldiers_status"
+          [ "$soldiers_status" = "200" ] || { cat /tmp/soldiers.json; kill "$server_pid"; exit 1; }
+
+          count=$(node -pe "JSON.parse(require('fs').readFileSync('/tmp/soldiers.json')).length")
+          echo "Seeded soldier count: $count"
+          [ "$count" -gt 0 ] || { echo "Expected seeded soldiers, got none." >&2; kill "$server_pid"; exit 1; }
+
+          kill "$server_pid"
