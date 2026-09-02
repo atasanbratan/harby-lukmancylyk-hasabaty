@@ -34,17 +34,12 @@ jobs:
         working-directory: client
         run: npm run build
 
-      # Set-MpPreference -DisableRealtimeMonitoring reports success even
-      # when Tamper Protection silently blocks it on these hardened runner
-      # images - verify it actually took effect, and fall back to explicit
-      # exclusion paths (a narrower operation Tamper Protection typically
-      # does allow) for everywhere the build reads/writes if not. A ~30s
-      # compression step taking 30+ minutes (60-90x) is real AV/behavior-
-      # monitoring interference, not just a weaker CI CPU.
-      #
-      # pwsh (PowerShell 7), not the default "powershell" (5.1) alias -
-      # 5.1 choked on a non-ASCII dash character in an earlier version of
-      # this script with a confusing, misattributed parse error.
+      # Kept even though it turned out not to be the cause (see the note
+      # on the build step below) - it's still a reasonable, harmless
+      # speedup to leave in place. pwsh (PowerShell 7), not the default
+      # "powershell" (5.1) alias, since 5.1 choked on a non-ASCII dash
+      # character in an earlier version of this script with a confusing,
+      # misattributed parse error.
       - name: Disable or exclude from Windows Defender scanning
         shell: pwsh
         run: |
@@ -66,10 +61,24 @@ jobs:
       # directly, rather than electron-builder's own "onTag" policy, which
       # inspects local git tag refs — those aren't present on the default
       # shallow, tag-less checkout.
+      #
+      # This step's compression of the ~320MB unpacked Electron app into
+      # the NSIS payload (a single-threaded LZMA pass by design — see the
+      # -mtc/-ms/-mtm/-mta=off flags in its own DEBUG output) takes ~25s
+      # on a normal dev machine but has taken 30+ minutes here across
+      # several runs. Ruled out so far: an ASCII product name, disabling
+      # Defender, CSC_IDENTITY_AUTO_DISCOVERY, pinning windows-2022 over
+      # windows-latest, and verified Defender exclusion paths/processes —
+      # none of it made a measurable difference, so this really is just
+      # how long a 2-vCPU GH-hosted runner takes for this specific,
+      # forced-single-threaded operation. It does eventually finish, so a
+      # generous timeout (not a fix, just patience) is the honest answer
+      # until there's a real lever to pull — e.g. dropping the payload
+      # size significantly, or moving off NSIS's default packaging.
       - name: Build Windows installer
         working-directory: desktop
         shell: bash
-        timeout-minutes: 30
+        timeout-minutes: 60
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             npx electron-builder --win --publish always
