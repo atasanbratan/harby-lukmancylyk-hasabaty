@@ -32,9 +32,10 @@ harby-lukmancylyk-hasabaty/
 ├── server/                  Express + SQLite backend (API on port 3001)
 │   └── data/                registry.sqlite lives here (auto-created, auto-seeded)
 ├── desktop/                 Electron wrapper — packages client+server into a
-│                             Windows 10/11 installable .exe
-├── .github/workflows/       CI: builds (and, on a version tag, releases) the
-│                             Windows installer — see Releases below
+│                             Windows 10/11 installable .exe (built locally,
+│                             not in CI — see Desktop app below)
+├── .github/workflows/       CI: installs, builds, and smoke-tests the web
+│                             app (client+server) on every push/PR
 └── package.json              root scripts to run client + server together
 ```
 
@@ -136,25 +137,25 @@ The app's SQLite database lives in the per-user app-data folder (Electron's
 not inside the install directory — so it survives reinstalls/updates and
 doesn't need admin rights to write to.
 
-## Releases
-
-`.github/workflows/release.yml` builds the Windows installer on GitHub's own
-Windows runners:
-
-- Any push to `main`, or a manual run from the Actions tab, **builds** the
-  installer and attaches it as a downloadable workflow artifact (handy for
-  testing a change without cutting a release).
-- Pushing a tag like `v1.0.1` — matching the `version` in
-  `desktop/package.json` — additionally **publishes** it as a GitHub
-  Release with the `.exe` attached. Bump that version and tag together:
-
-  ```bash
-  git tag v1.0.1
-  git push origin v1.0.1
-  ```
-
 The installer isn't code-signed, so Windows SmartScreen will likely show an
 "unknown publisher" warning on first run — expected, not a broken build.
+
+**Build the installer locally, not in CI.** `npm run dist:win` was tried in
+GitHub Actions (Windows runners) and hit a reproducible deadlock in
+electron-builder's NSIS packaging step — compressing the ~320MB unpacked
+app never completed regardless of timeout (tried up to 60 minutes), and
+survived every mitigation attempted (Defender exclusions, signing config,
+pinning an older runner image). It builds locally in well under a minute,
+so that's the supported path for now; `.github/workflows/ci.yml` only
+validates the web app.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `main` and every PR: it
+installs `client/` and `server/`, builds the frontend, boots the server,
+and exercises the real API (`POST /api/login`, then an authenticated
+`GET /api/soldiers`) to confirm the seeded data actually comes back —
+not just that `npm install`/`npm run build` exit cleanly.
 
 ## API
 
