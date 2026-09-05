@@ -1,8 +1,8 @@
-import { app, BrowserWindow } from 'electron';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+const { app, BrowserWindow } = require('electron');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+const http = require('node:http');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
 
 // Packaged builds carry the server + built frontend under
@@ -20,20 +20,26 @@ process.env.PORT = String(PORT);
 async function waitForServer(url, timeoutMs = 15000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    try {
-      const res = await fetch(url);
-      if (res.status < 500) return true;
-    } catch {
-      // not up yet
-    }
-    await new Promise((r) => setTimeout(r, 150));
+    const ready = await new Promise((resolve) => {
+      const request = http.get(url, (response) => {
+        response.resume();
+        resolve(response.statusCode < 500);
+      });
+      request.on('error', () => resolve(false));
+      request.setTimeout(1000, () => {
+        request.destroy();
+        resolve(false);
+      });
+    });
+    if (ready) return true;
+    await new Promise((resolve) => setTimeout(resolve, 150));
   }
   return false;
 }
 
 async function createWindow() {
   await import(pathToFileURL(serverEntry).href);
-  await waitForServer(`http://localhost:${PORT}/api/login`);
+  await waitForServer(`http://127.0.0.1:${PORT}/api/login`);
 
   const win = new BrowserWindow({
     width: 1360,
@@ -47,10 +53,13 @@ async function createWindow() {
       nodeIntegration: false,
     },
   });
-  win.loadURL(`http://localhost:${PORT}/`);
+  win.loadURL(`http://127.0.0.1:${PORT}/`);
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(createWindow).catch((error) => {
+  console.error('Desktop startup failed:', error);
+  app.quit();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

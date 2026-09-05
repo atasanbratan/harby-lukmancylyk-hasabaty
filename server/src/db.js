@@ -1,4 +1,4 @@
-import { DatabaseSync } from 'node:sqlite';
+import initSqlJs from 'sql.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -10,7 +10,82 @@ const dataDir = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 const dbPath = path.join(dataDir, 'registry.sqlite');
 
-export const db = new DatabaseSync(dbPath);
+// Electron 22 is the final release line that runs on Windows 7/8/8.1, but
+// its Node 16 runtime predates node:sqlite. sql.js keeps the same SQLite file
+// format while avoiding native, architecture-specific add-ons in the x86 app.
+const SQL = await initSqlJs({
+  locateFile: (file) => path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist', file),
+});
+const sqlite = fs.existsSync(dbPath)
+  ? new SQL.Database(fs.readFileSync(dbPath))
+  : new SQL.Database();
+
+function persist() {
+  const tempPath = `${dbPath}.tmp`;
+  const backupPath = `${dbPath}.backup`;
+  fs.writeFileSync(tempPath, Buffer.from(sqlite.export()));
+
+  if (!fs.existsSync(dbPath)) {
+    fs.renameSync(tempPath, dbPath);
+    return;
+  }
+
+  if (fs.existsSync(backupPath)) fs.unlinkSync(backupPath);
+  fs.renameSync(dbPath, backupPath);
+  try {
+    fs.renameSync(tempPath, dbPath);
+    fs.unlinkSync(backupPath);
+  } catch (error) {
+    if (!fs.existsSync(dbPath) && fs.existsSync(backupPath)) {
+      fs.renameSync(backupPath, dbPath);
+    }
+    throw error;
+  }
+}
+
+function query(sql, params, firstOnly) {
+  const statement = sqlite.prepare(sql);
+  try {
+    statement.bind(params);
+    const rows = [];
+    while (statement.step()) {
+      rows.push(statement.getAsObject());
+      if (firstOnly) break;
+    }
+    return firstOnly ? rows[0] : rows;
+  } finally {
+    statement.free();
+  }
+}
+
+export const db = {
+  exec(sql) {
+    sqlite.exec(sql);
+    persist();
+  },
+  prepare(sql) {
+    return {
+      all(...params) {
+        return query(sql, params, false);
+      },
+      get(...params) {
+        return query(sql, params, true);
+      },
+      run(...params) {
+        const statement = sqlite.prepare(sql);
+        try {
+          statement.bind(params);
+          statement.step();
+        } finally {
+          statement.free();
+        }
+        const changes = sqlite.getRowsModified();
+        persist();
+        return { changes };
+      },
+    };
+  },
+};
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS soldiers (

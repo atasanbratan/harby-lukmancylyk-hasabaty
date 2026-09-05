@@ -4,14 +4,13 @@
   "version": "1.0.0",
   "description": "Desktop installer for Aýratyn gözegçilikde saklamak",
   "author": "atasanbratan",
-  "type": "module",
-  "main": "main.js",
+  "main": "main.cjs",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win"
   },
   "devDependencies": {
-    "electron": "^44.0.0",
+    "electron": "22.3.27",
     "electron-builder": "^25.1.8"
   },
   "build": {
@@ -23,7 +22,7 @@
       "output": "release"
     },
     "files": [
-      "main.js"
+      "main.cjs"
     ],
     "extraResources": [
       {
@@ -40,14 +39,16 @@
       }
     ],
     "win": {
+      "signAndEditExecutable": false,
       "target": [
         {
           "target": "nsis",
           "arch": [
-            "x64"
+            "ia32"
           ]
         }
-      ]
+      ],
+      "artifactName": "${productName} Setup ${version} Win7-8 x86.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -63,7 +64,7 @@
   },
   "lavamoat": {
     "allowScripts": {
-      "electron#44.0.0": true
+      "electron#22.3.27": true
     }
   }
 }

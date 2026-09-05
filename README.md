@@ -4,13 +4,14 @@ Special-monitoring registry for soldiers flagged under one or more oversight
 categories (discipline, health, family situation, etc.) — personal/unit info,
 medical event history, search/filter/sort/group, a printable dossier view,
 and a dashboard. Frontend is Vite + React; backend is Express with a SQLite
-database (via Node's built-in `node:sqlite`, no native build tools required).
+database (via `sql.js`, a WebAssembly build of SQLite with no native add-ons).
 The app sits behind a login screen (see **Login** below).
 
 ## Prerequisites
 
-- **Node.js 22.5+** (uses the built-in `node:sqlite` module). This project was
-  built and tested on Node 24 LTS.
+- **Node.js 22.12+ and npm** for development and builds. This project was
+  built locally with Node 24.19.0 and npm 11.17.0. The minimum version comes
+  from the Vite build tools, not the database.
   Check what you have installed:
 
   ```bash
@@ -24,6 +25,10 @@ The app sits behind a login screen (see **Login** below).
   winget install -e --id OpenJS.NodeJS.LTS
   ```
 
+Build the Windows installer on a modern Windows 10/11 computer. The
+Windows 7/8/8.1 computer only runs the packaged installer and application;
+it does not need Node.js, npm, Git, or development tools installed.
+
 ## Project structure
 
 ```
@@ -31,11 +36,11 @@ harby-lukmancylyk-hasabaty/
 ├── client/                  Vite + React frontend
 ├── server/                  Express + SQLite backend (API on port 3001)
 │   └── data/                registry.sqlite lives here (auto-created, auto-seeded)
-├── desktop/                 Electron wrapper — packages client+server into a
-│                             Windows 10/11 installable .exe (built locally,
-│                             not in CI — see Desktop app below)
+├── desktop/                 Electron 22 wrapper and Windows x86 NSIS installer
+│   ├── main.cjs             CommonJS desktop entry point (loads the ESM server)
+│   └── release/             locally built installers and unpacked app (ignored by git)
 ├── .github/workflows/       CI: installs, builds, and smoke-tests the web
-│                             app (client+server) on every push/PR
+│                             app (client+server) on pushes to main and PRs
 └── package.json              root scripts to run client + server together
 ```
 
@@ -45,11 +50,22 @@ From the project root, install dependencies for the root, client, server,
 and desktop app:
 
 ```bash
+npm install
 npm run install:all
 ```
 
-This is equivalent to running `npm install` in `client/`, `server/`,
-`desktop/`, and the project root separately.
+The first command installs root tools such as `concurrently`. The second
+installs dependencies in `server/`, `client/`, and `desktop/`. Keep both
+steps when setting up a fresh clone. Downloads include the Electron runtime
+and may take several minutes on a slow connection.
+
+For web-only development, the desktop dependencies are optional:
+
+```bash
+npm ci
+npm ci --prefix server
+npm ci --prefix client
+```
 
 ## Run (development)
 
@@ -94,25 +110,19 @@ npm run dev:client   # just the frontend, port 5173 (expects the API running sep
 
 ## Building for production
 
-Build the frontend static assets:
+From the repository root, build the frontend and start the server:
 
 ```bash
-cd client
-npm run build
+npm run build --prefix client
+npm start --prefix server
 ```
 
 This outputs to `client/dist/`. The Express server auto-detects that folder
 and, if present, serves the built SPA itself alongside the API on the same
-origin — so `npm start` in `server/` (after the client build above) is
-enough to get the whole app running at **http://localhost:3001**, no
-separate static host or proxy needed:
+origin. The commands above run the whole app at **http://127.0.0.1:3001**
+without a separate static host or proxy.
 
-```bash
-cd server
-npm start
-```
-
-## Desktop app (Windows installer)
+## Desktop app (Windows 7/8/8.1 32-bit installer)
 
 The `desktop/` folder wraps the same client + server in Electron so it can
 be installed and run like a normal Windows program — a Start Menu / Desktop
@@ -121,41 +131,63 @@ shortcut, no terminal, no separately-installed Node required.
 ```bash
 npm run desktop     # build the client, then launch the app in a window (for testing)
 npm run dist:win     # build the client, then produce a Windows installer .exe
-                      # → desktop/release/<Product Name> Setup <version>.exe
 ```
 
-The installer only targets **Windows 10 and 11**. `node:sqlite` (which the
-backend uses) needs Node 22.5+, and Electron only bundles that on fairly
-recent releases — genuine Windows 7/8 support would mean swapping the
-database layer for something with no Node-version floor (e.g.
-`better-sqlite3`, rebuilt per Electron version) *and* an old, unmaintained
-Electron/Chromium build, since Chromium itself dropped Windows 7/8 support
-in 2023. Not done here; flagged in case it's ever worth revisiting.
+For version 1.0.0 the generated installer is:
+
+```text
+desktop/release/Aytratyn Gozegcilik Setup 1.0.0 Win7-8 x86.exe
+```
+
+Copy this `.exe` to the target computer and run it to choose the installation
+folder and create Start Menu/Desktop shortcuts. It includes the frontend,
+backend, SQLite WebAssembly module, and Electron runtime. User databases are
+excluded from the installer; a new installation seeds 10 sample records.
+
+The installer targets **32-bit Windows 7, 8, and 8.1** (`ia32`, also called
+x86). It pins **Electron 22.3.27**, which bundles Node 16.17.1 and Chromium
+108. The CommonJS desktop bootstrap and `sql.js` database layer allow the
+application to run with that older runtime without a native SQLite binary.
+
+Electron 22 is the [last Electron line supporting Windows 7/8/8.1](https://www.electronjs.org/blog/windows-7-to-8-1-deprecation-notice).
+It is [end-of-life](https://releases.electronjs.org/release/v22.3.27), so its
+Chromium engine no longer receives security fixes.
+
+### Validation and limits
+
+The legacy installer was built on Windows 11. Both installer and application
+executables were verified as x86 binaries. The packaged application served
+the UI, created its database, authenticated successfully, and returned 10
+seeded records under Electron 22/Node 16. The database adapter also passed
+create, update, and delete checks against temporary data.
+
+**The installer has not been tested on an actual Windows 7, 8, or 8.1
+machine.** Those are compatibility targets based on the bundled Electron
+version, not verified operating-system test results.
 
 The app's SQLite database lives in the per-user app-data folder (Electron's
 `userData`, e.g. `%APPDATA%\aytratyn-gozegcilikde-saklamak-desktop\data\`),
 not inside the install directory — so it survives reinstalls/updates and
 doesn't need admin rights to write to.
 
-The installer isn't code-signed, so Windows SmartScreen will likely show an
-"unknown publisher" warning on first run — expected, not a broken build.
+The installer is unsigned, so Windows may display an "unknown publisher"
+warning. `signAndEditExecutable` is disabled in the build configuration;
+the application currently uses Electron's default icon and executable metadata.
 
-**Build the installer locally, not in CI.** `npm run dist:win` was tried in
-GitHub Actions (Windows runners) and hit a reproducible deadlock in
-electron-builder's NSIS packaging step — compressing the ~320MB unpacked
-app never completed regardless of timeout (tried up to 60 minutes), and
-survived every mitigation attempted (Defender exclusions, signing config,
-pinning an older runner image). It builds locally in well under a minute,
-so that's the supported path for now; `.github/workflows/ci.yml` only
-validates the web app.
+**Build the installer locally.** Previous Windows CI builds stalled during
+NSIS packaging; the current workflow validates only the web app. The first
+local build downloads Electron and NSIS tools; later builds reuse their cache.
+Generated installers are ignored by Git and are not uploaded by the CI workflow.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every PR: it
-installs `client/` and `server/`, builds the frontend, boots the server,
+`.github/workflows/ci.yml` runs on pushes to `main`, pull requests, and manual
+dispatch. On Ubuntu with Node 22, it installs `client/` and `server/`, builds
+the frontend, boots the server,
 and exercises the real API (`POST /api/login`, then an authenticated
 `GET /api/soldiers`) to confirm the seeded data actually comes back —
-not just that `npm install`/`npm run build` exit cleanly.
+not just that `npm install`/`npm run build` exit cleanly. It does not build
+the desktop installer or test legacy Windows.
 
 ## API
 
@@ -182,5 +214,12 @@ All soldier endpoints are under `/api/soldiers` and require that header:
   `<link>` tags in `client/index.html`.
 - Soldier photos are stored as base64 data URLs directly in the SQLite
   `soldiers.photo` column.
-- The database file (`server/data/registry.sqlite`) is not tracked by git —
-  delete it to reset to the seed data on next server start.
+- The web server defaults to `server/data/registry.sqlite`; set `DATA_DIR`
+  to use another folder. The desktop app uses its per-user app-data directory
+  described above. Both use the SQLite file format.
+- `sql.js` keeps the database in memory and saves snapshots after writes.
+  Run only one app/server process per database directory. Close the app or
+  stop the server before backing up or restoring `registry.sqlite`.
+- Database files are not tracked by Git. To reset to sample data, stop the
+  owning app/server and move the database to a backup location; a fresh file
+  is created and seeded on next launch.
