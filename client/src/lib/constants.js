@@ -57,10 +57,10 @@ export const FREQUENCIES = [
 ];
 export const FREQUENCY_MAP = Object.fromEntries(FREQUENCIES.map((f) => [f.value, f]));
 
-export const OK = '#3FB68B';
-export const AMBER = '#FFB627';
-export const ALERT = '#E5484D';
-export const GREY = '#6B7C8C';
+export const OK = 'var(--success)';
+export const AMBER = 'var(--accent)';
+export const ALERT = 'var(--danger)';
+export const GREY = 'var(--text-muted)';
 
 export function blankSoldier() {
   return {

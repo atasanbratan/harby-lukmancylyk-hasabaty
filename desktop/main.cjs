@@ -47,7 +47,7 @@ async function createWindow() {
     minWidth: 960,
     minHeight: 640,
     autoHideMenuBar: true,
-    backgroundColor: '#0A0E12',
+    backgroundColor: '#F7F2E8',
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

@@ -14,7 +14,7 @@ import DashboardPage from './pages/DashboardPage';
 function AppShell() {
   return (
     <AppStateProvider>
-      <div style={{ minHeight: '100vh', background: '#0A0E12', position: 'relative' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
         <div className="grid-bg" data-noprint />
         <Header />
         <Routes>

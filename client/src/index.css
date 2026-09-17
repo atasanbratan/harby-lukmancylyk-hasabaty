@@ -1,17 +1,42 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  color-scheme: light;
+  --bg: #F7F2E8;
+  --surface: #FFFCF6;
+  --surface-muted: #F0E8D9;
+  --surface-alt: #E9DFCB;
+  --border: #D8CCB9;
+  --control-border: #9A8970;
+  --text: #3C3830;
+  --text-strong: #28271F;
+  --text-muted: #655D50;
+  --text-subtle: #746957;
+  --accent: #77531F;
+  --accent-hover: #604219;
+  --accent-soft: #EEE0C4;
+  --on-accent: #FFFCF6;
+  --success: #2F6B50;
+  --danger: #A83B3E;
+  --danger-soft: #F5E3DE;
+  --danger-border: #CCA7A0;
+  --header-bg: rgba(255, 252, 246, .96);
+  --overlay: rgba(60, 56, 48, .36);
+  --shadow: 0 8px 24px rgba(71, 53, 28, .12);
+}
+
 html, body {
   min-height: 100%;
-  background: #0A0E12;
-  color: #C9D6E0;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   font-family: 'IBM Plex Sans', sans-serif;
 }
 
 #root { min-height: 100vh; }
 
-a { color: #FFB627; text-decoration: none; }
-a:hover { color: #FFCB5C; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); }
 
 input, select, textarea, button {
   font-family: 'IBM Plex Sans', sans-serif;
@@ -19,11 +44,12 @@ input, select, textarea, button {
 }
 
 input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
-  outline: 1px solid #FFB627;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-::placeholder { color: #4C5A66; }
+::placeholder { color: var(--text-subtle); opacity: 1; }
+::selection { background: var(--accent-soft); color: var(--text-strong); }
 
 @keyframes riseIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -47,17 +73,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 }
 @keyframes alertGlow {
   0%, 100% {
-    border-color: #E5484D;
-    box-shadow: 0 0 0 1px #E5484D, 0 0 16px rgba(229, 72, 77, .55);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 1px var(--danger), 0 0 12px rgba(168, 59, 62, .22);
   }
   50% {
-    border-color: #5c2226;
-    box-shadow: 0 0 0 1px rgba(229, 72, 77, .3), 0 0 3px rgba(229, 72, 77, .12);
+    border-color: var(--danger-border);
+    box-shadow: 0 0 0 1px rgba(168, 59, 62, .16), 0 0 3px rgba(168, 59, 62, .08);
   }
 }
 @keyframes alertBlink {
   0%, 49% { opacity: 1; }
-  50%, 100% { opacity: .35; }
+  50%, 100% { opacity: .8; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -76,8 +102,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: .035;
-  background-image: linear-gradient(#C9D6E0 1px, transparent 1px), linear-gradient(90deg, #C9D6E0 1px, transparent 1px);
+  opacity: .025;
+  background-image: linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
@@ -89,50 +115,50 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   font-size: 11px;
   letter-spacing: .12em;
   text-transform: uppercase;
-  background: transparent;
-  border: 1px solid #1F2C38;
-  color: #8FA0AE;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  color: var(--text-muted);
   padding: 9px 14px;
   cursor: pointer;
-  border-radius: 0;
+  border-radius: 5px;
   transition: border-color 140ms, color 140ms, background 140ms;
 }
-.btn:hover { border-color: #FFB627; color: #FFB627; }
+.btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 
 .btn-primary {
-  color: #0A0E12;
-  background: #FFB627;
-  border-color: #FFB627;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
   font-weight: 500;
 }
-.btn-primary:hover { background: #FFCB5C; border-color: #FFCB5C; color: #0A0E12; }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--on-accent); }
 
-.btn-danger { color: #E5484D; border-color: #2A1A1C; }
-.btn-danger:hover { border-color: #E5484D; color: #E5484D; }
+.btn-danger { color: var(--danger); border-color: var(--danger-border); }
+.btn-danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
 
 .field-label {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #6B7C8C;
+  color: var(--text-muted);
   display: block;
   margin-bottom: 6px;
 }
 
 .field-input {
   width: 100%;
-  background: #111821;
-  border: 1px solid #1F2C38;
-  color: #C9D6E0;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  color: var(--text);
   font-size: 14px;
   padding: 10px 12px;
   border-radius: 2px;
 }
-.field-input:focus-visible { border-color: #FFB627; }
+.field-input:focus-visible { border-color: var(--accent); }
 
 .field-error {
-  color: #E5484D;
+  color: var(--danger);
   font-size: 11px;
   margin-top: 5px;
   font-family: 'IBM Plex Mono', monospace;
@@ -145,16 +171,43 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   padding: 5px 10px;
   border-radius: 2px;
   cursor: pointer;
-  background: transparent;
-  border: 1px solid #1F2C38;
-  color: #8FA0AE;
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  color: var(--text-muted);
 }
-.chip:hover { border-color: #FFB627; }
+.chip:hover { border-color: var(--accent); background: var(--surface-muted); }
 .chip.active {
-  background: rgba(255, 182, 39, .12);
-  border-color: #FFB627;
-  color: #FFB627;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
 }
+
+.registry-filters .registry-filter-chip {
+  max-width: 100%;
+  min-height: 36px;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: .02em;
+  padding: 7px 11px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--control-border);
+}
+.registry-filters .registry-filter-chip:hover {
+  color: var(--accent);
+  background: var(--surface-muted);
+  border-color: var(--accent);
+}
+.registry-filters .registry-filter-chip.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.registry-search::placeholder { color: var(--text-muted); }
 
 /* All soldier cards share one fixed height so short and long records
    (wrapped names, missing fields) render as visually identical cards. */
@@ -186,12 +239,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   align-items: flex-start;
   gap: 10px;
   font-size: 13px;
-  color: #C9D6E0;
+  color: var(--text);
   cursor: pointer;
 }
 .checkbox-row input[type="checkbox"] {
   margin-top: 3px;
-  accent-color: #FFB627;
+  accent-color: var(--accent);
   width: 15px;
   height: 15px;
   flex-shrink: 0;

@@ -3,5 +3,6 @@ dist/
 server/data/*.sqlite
 server/data/*.sqlite-*
 desktop/release/
+desktop/release-*/
 .DS_Store
 *.log

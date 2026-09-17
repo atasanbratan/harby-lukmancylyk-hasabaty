@@ -31,13 +31,13 @@ export default function LoginPage() {
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <form
         onSubmit={submit}
-        style={{ width: '100%', maxWidth: 360, border: '1px solid #1F2C38', background: '#111821', padding: 32 }}
+        style={{ width: '100%', maxWidth: 360, border: '1px solid var(--border)', background: 'var(--surface)', padding: 32 }}
       >
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <span className="condensed" style={{ display: 'block', fontWeight: 700, fontSize: 18, letterSpacing: '.08em', textTransform: 'uppercase', color: '#E3ECF3' }}>
+          <span className="condensed" style={{ display: 'block', fontWeight: 700, fontSize: 18, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--text-strong)' }}>
             Aýratyn gözegçilikde saklamak
           </span>
-          <span className="mono" style={{ fontSize: 11, color: '#6B7C8C', letterSpacing: '.1em' }}>Ulgama giriş</span>
+          <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '.1em' }}>Ulgama giriş</span>
         </div>
 
         <div style={{ marginBottom: 16 }}>

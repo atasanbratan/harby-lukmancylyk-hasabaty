@@ -166,14 +166,14 @@ export default function FormPage() {
     error: errors[key] || '',
   });
 
-  const inputStyle = (error) => ({ borderColor: error ? ALERT : '#1F2C38' });
+  const inputStyle = (error) => ({ borderColor: error ? ALERT : 'var(--control-border)' });
 
-  const sectionTitleStyle = { fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: '#C9D6E0', display: 'block', marginBottom: 16 };
+  const sectionTitleStyle = { fontWeight: 600, fontSize: 13, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--text)', display: 'block', marginBottom: 16 };
 
   return (
     <main style={{ position: 'relative', zIndex: 1, maxWidth: 900, margin: '0 auto', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <button type="button" onClick={leave} className="mono" style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#8FA0AE', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <button type="button" onClick={leave} className="mono" style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
           ← Yza
         </button>
         <span className="condensed" style={{ flex: 1, fontWeight: 700, fontSize: 20, letterSpacing: '.08em', textTransform: 'uppercase' }}>
@@ -182,19 +182,19 @@ export default function FormPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 20 }}>
             <div>
               <span className="field-label">Surat</span>
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) onPhotoFile(f); }}
-                style={{ position: 'relative', aspectRatio: '3/4', background: '#0C1218', border: '1px dashed #1F2C38', overflow: 'hidden' }}
+                style={{ position: 'relative', aspectRatio: '3/4', background: 'var(--surface-muted)', border: '1px dashed var(--border)', overflow: 'hidden' }}
               >
                 {draft.photo ? (
                   <div style={{ width: '100%', height: '100%', backgroundImage: `url("${draft.photo}")`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
                 ) : (
-                  <div className="mono" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', fontSize: 10, letterSpacing: '.08em', color: '#3A4753', textAlign: 'center', padding: 8 }}>
+                  <div className="mono" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', fontSize: 10, letterSpacing: '.08em', color: 'var(--text-subtle)', textAlign: 'center', padding: 8 }}>
                     Süýräň ýa-da saýlaň
                   </div>
                 )}
@@ -235,7 +235,7 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <span className="condensed" style={sectionTitleStyle}>Çagyryş</span>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             <div>
@@ -257,7 +257,7 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <span className="condensed" style={sectionTitleStyle}>Wezipe</span>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             <div>
@@ -275,7 +275,7 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <span className="condensed" style={sectionTitleStyle}>Kesel kesgidi / sebäbi</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
@@ -289,22 +289,22 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
             <span className="condensed" style={{ flex: 1, ...sectionTitleStyle, marginBottom: 0 }}>Lukmançylyk wakalary</span>
             <button type="button" className="btn" onClick={addEvent}>+ Waka goş</button>
           </div>
           {(draft.medicalEvents || []).length === 0 ? (
-            <span style={{ fontSize: 13, color: '#6B7C8C' }}>Waka ýok.</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Waka ýok.</span>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {draft.medicalEvents.map((e, i) => (
-                <div key={i} style={{ border: '1px solid #1F2C38', padding: 14, position: 'relative' }}>
+                <div key={i} style={{ border: '1px solid var(--border)', padding: 14, position: 'relative' }}>
                   <button
                     type="button"
                     onClick={() => removeEvent(i)}
                     aria-label="Wakany aýyr"
-                    style={{ position: 'absolute', top: 10, right: 10, width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: '1px solid #1F2C38', color: '#8FA0AE', fontSize: 11, cursor: 'pointer' }}
+                    style={{ position: 'absolute', top: 10, right: 10, width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}
                   >
                     ✕
                   </button>
@@ -340,7 +340,7 @@ export default function FormPage() {
           )}
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <span className="condensed" style={sectionTitleStyle}>Ýagdaý — aýratyn gözegçilik alamatlary</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {CONCERNS.map((c) => {
@@ -370,7 +370,7 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <span className="condensed" style={sectionTitleStyle}>Iş geçirmäge berkidilen harby gullukçy</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {ASSIGNED_PERSONNEL_OPTIONS.map((name) => (
@@ -386,7 +386,7 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <span className="condensed" style={sectionTitleStyle}>Geçirilmeli iş</span>
           <div style={{ maxWidth: 260 }}>
             <span className="field-label">Iş geçirilmeli aralyk</span>
@@ -397,13 +397,13 @@ export default function FormPage() {
           </div>
         </section>
 
-        <section style={{ border: '1px solid #1F2C38', background: '#111821', padding: 20 }}>
+        <section style={{ border: '1px solid var(--border)', background: 'var(--surface)', padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
             <span className="condensed" style={{ flex: 1, ...sectionTitleStyle, marginBottom: 0 }}>Geçirilen çäreleriň ýazgysy</span>
             <button type="button" className="btn" onClick={addActionLogEntry}>+ Ýazgy goş</button>
           </div>
           {(draft.actionLog || []).length === 0 ? (
-            <span style={{ fontSize: 13, color: '#6B7C8C' }}>Ýazgy ýok.</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Ýazgy ýok.</span>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
@@ -435,7 +435,7 @@ export default function FormPage() {
                           type="button"
                           onClick={() => removeActionLogEntry(i)}
                           aria-label="Ýazgyny aýyr"
-                          style={{ width: 34, height: 34, display: 'grid', placeItems: 'center', background: 'transparent', border: '1px solid #1F2C38', color: '#8FA0AE', fontSize: 11, cursor: 'pointer' }}
+                          style={{ width: 34, height: 34, display: 'grid', placeItems: 'center', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}
                         >
                           ✕
                         </button>
@@ -453,7 +453,7 @@ export default function FormPage() {
             {saving ? 'Saklanýar…' : 'Sakla'}
           </button>
           <button type="button" className="btn" onClick={leave}>Ýatyr</button>
-          <span className="mono" style={{ fontSize: 11, color: saveFail ? ALERT : '#4C5A66' }}>
+          <span className="mono" style={{ fontSize: 11, color: saveFail ? ALERT : 'var(--text-subtle)' }}>
             {saveFail ? 'Ýazgy saklanmady. Gaýtadan synanyşyň.' : (dirty ? 'Saklanmadyk üýtgeşmeler bar.' : '')}
           </span>
         </div>

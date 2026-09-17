@@ -29,28 +29,28 @@ export default function Modal() {
       data-noprint
       style={{
         position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(10,14,18,.72)', backdropFilter: 'blur(2px)',
+        background: 'var(--overlay)', backdropFilter: 'blur(2px)',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(420px, 90vw)', background: '#111821', border: '1px solid #1F2C38' }}
+        style={{ width: 'min(420px, 90vw)', background: 'var(--surface)', border: '1px solid var(--border)' }}
       >
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid #1F2C38' }}>
-          <span className="condensed" style={{ fontWeight: 700, fontSize: 16, letterSpacing: '.08em', textTransform: 'uppercase', color: '#E3ECF3' }}>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)' }}>
+          <span className="condensed" style={{ fontWeight: 700, fontSize: 16, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--text-strong)' }}>
             {title}
           </span>
         </div>
         <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <span style={{ fontSize: 14, color: '#C9D6E0' }}>{body}</span>
+          <span style={{ fontSize: 14, color: 'var(--text)' }}>{body}</span>
           {warn && <span className="mono" style={{ fontSize: 11, color: ALERT }}>{warn}</span>}
         </div>
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: '1px solid #1F2C38' }}>
+        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: '1px solid var(--border)' }}>
           <button type="button" className="btn" style={{ flex: 1 }} onClick={closeModal}>{cancelLabel}</button>
           <button
             type="button"
             className="btn"
-            style={{ flex: 1, color: '#0A0E12', background: confirmColor, borderColor: confirmColor, fontWeight: 500 }}
+            style={{ flex: 1, color: 'var(--on-accent)', background: confirmColor, borderColor: confirmColor, fontWeight: 500 }}
             onClick={onConfirm}
           >
             {confirmLabel}

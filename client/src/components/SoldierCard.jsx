@@ -25,7 +25,7 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
   const [hovered, setHovered] = useState(false);
   const status = monitoringStatus(soldier);
   const flagged = status.alert;
-  const brColor = flagged ? '#E5484D' : (hovered ? '#FFB627' : '#1F2C38');
+  const brColor = flagged ? 'var(--danger)' : (hovered ? 'var(--accent)' : 'var(--border)');
   const brSize = hovered ? 18 : 12;
 
   const corner = (top, left) => (
@@ -53,11 +53,11 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
         className={`soldier-card${flagged ? ' soldier-card-alert' : ''}`}
         style={{
           display: 'grid', gridTemplateColumns: '92px 1fr', gap: 14,
-          background: '#111821', border: `1px solid ${flagged ? '#E5484D' : (hovered ? '#FFB627' : '#1F2C38')}`,
-          padding: 14, transition: 'border-color 160ms', color: '#C9D6E0',
+          background: 'var(--surface)', border: `1px solid ${flagged ? 'var(--danger)' : (hovered ? 'var(--accent)' : 'var(--border)')}`,
+          padding: 14, transition: 'border-color 160ms', color: 'var(--text)',
         }}
       >
-        <div style={{ position: 'relative', overflow: 'hidden', background: '#0C1218', aspectRatio: '3/4', border: '1px solid #1F2C38' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'var(--surface-muted)', aspectRatio: '3/4', border: '1px solid var(--border)' }}>
           {soldier.photo ? (
             <div
               role="img"
@@ -73,8 +73,8 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
               className="mono"
               style={{
                 position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, letterSpacing: '.1em', color: '#3A4753',
-                background: 'repeating-linear-gradient(45deg,#0C1218 0 5px,#0E151C 5px 10px)',
+                fontSize: 10, letterSpacing: '.1em', color: 'var(--text-subtle)',
+                background: 'repeating-linear-gradient(45deg,var(--surface-muted) 0 5px,var(--surface-alt) 5px 10px)',
               }}
             >
               {initials(soldier.fullName)}
@@ -82,26 +82,26 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
           )}
         </div>
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="mono" style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#6B7C8C' }}>
+          <span className="mono" style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
             {soldier.rank || 'harby ady görkezilmedik'}
           </span>
-          <span className="condensed clamp-2" style={{ fontWeight: 600, fontSize: 18, lineHeight: 1.15, letterSpacing: '.03em', color: '#E3ECF3', overflowWrap: 'anywhere' }}>
+          <span className="condensed clamp-2" style={{ fontWeight: 600, fontSize: 18, lineHeight: 1.15, letterSpacing: '.03em', color: 'var(--text-strong)', overflowWrap: 'anywhere' }}>
             {highlightParts(soldier.fullName, query).map((p, i) => (
-              <span key={i} style={{ background: p.hl ? 'rgba(255,182,39,.22)' : 'transparent', color: p.hl ? '#FFB627' : 'inherit' }}>{p.t}</span>
+              <span key={i} style={{ background: p.hl ? 'rgba(119,83,31,.12)' : 'transparent', color: p.hl ? 'var(--accent)' : 'inherit' }}>{p.t}</span>
             ))}
           </span>
-          <span className="mono" style={{ fontSize: 12, color: '#8FA0AE' }}>{fmtDate(soldier.birthDate)}</span>
-          <span className="clamp-1" style={{ fontSize: 12, color: '#6B7C8C' }}>{soldier.birthPlace || '—'}</span>
-          <span className="clamp-1" style={{ fontSize: 12, color: '#8FA0AE' }}>{unitLabel(soldier)}</span>
+          <span className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(soldier.birthDate)}</span>
+          <span className="clamp-1" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{soldier.birthPlace || '—'}</span>
+          <span className="clamp-1" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{unitLabel(soldier)}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto', paddingTop: 4 }}>
             <span
               className={`mono${flagged ? ' soldier-card-alert-label' : ''}`}
-              style={{ fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: flagged ? '#E5484D' : status.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              style={{ fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: flagged ? 'var(--danger)' : status.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             >
               ● {status.label}
             </span>
             <span style={{ flex: 1 }} />
-            <span className="mono" style={{ fontSize: 10, color: '#4C5A66', flexShrink: 0 }}>{soldier.callUpPeriod}</span>
+            <span className="mono" style={{ fontSize: 10, color: 'var(--text-subtle)', flexShrink: 0 }}>{soldier.callUpPeriod}</span>
           </div>
         </div>
       </Link>
@@ -113,7 +113,7 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
         <Link
           to={`/soldier/${soldier.id}/edit`}
           aria-label="Ýazgyny üýtget"
-          style={{ width: 26, height: 26, display: 'grid', placeItems: 'center', background: 'rgba(10,14,18,.9)', border: '1px solid #1F2C38', color: '#8FA0AE', fontSize: 12 }}
+          style={{ width: 26, height: 26, display: 'grid', placeItems: 'center', background: 'var(--header-bg)', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12 }}
         >
           ✎
         </Link>
@@ -121,7 +121,7 @@ export default function SoldierCard({ soldier, query, delay = 0 }) {
           type="button"
           aria-label="Ýazgyny öçür"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); askDelete(soldier); }}
-          style={{ width: 26, height: 26, display: 'grid', placeItems: 'center', background: 'rgba(10,14,18,.9)', border: '1px solid #1F2C38', color: '#8FA0AE', fontSize: 12, cursor: 'pointer' }}
+          style={{ width: 26, height: 26, display: 'grid', placeItems: 'center', background: 'var(--header-bg)', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}
         >
           ✕
         </button>
